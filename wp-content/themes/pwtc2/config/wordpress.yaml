@@ -42,7 +42,7 @@ parameters:
 #    - { id: "app", source: "%template_uri%/web/stylesheets/app.css", deps: ['font'] }
   wordpress.scripts:
       - { id: "sharethis", source: "http://w.sharethis.com/button/buttons.js", deps: [], header: false, version: "1.0" }
-      - { id: "gmaps", source: "https://maps.googleapis.com/maps/api/js?key=AIzaSyD-fZDMA7HRQAY7Vu9WhbpQeaMc_zV7aJ8", deps: [], header: false, version: "1.0" }
+      - { id: "gmaps", source: "https://maps.googleapis.com/maps/api/js?key=AIzaSyA63eXgkaChEypOBm2bGq9TazRaHzTcRhc", deps: [], header: false, version: "1.0" }
   wordpress.post_types: []
 #    reviews:
 #      labels:
