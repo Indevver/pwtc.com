@@ -25,8 +25,9 @@ jQuery(document).ready(function($) {
 
     function lookup_riders_cb(response) {
         var res = JSON.parse(response);
-		var num_riders = populate_riders_table(res.members);
-        if (num_riders == 1) {
+        var num_riders = populate_riders_table(res.members);
+        var autoaccept = $("#rider-lookup-results .lookup-frm input[name='autoaccept']").val();
+        if (num_riders == 1 && autoaccept == 'yes') {
             $("#rider-lookup-results").dialog('close');
             if (window.pwtc_mileage_rider_cb) {
                 window.pwtc_mileage_rider_cb(res.members[0].member_id, 
@@ -38,7 +39,6 @@ jQuery(document).ready(function($) {
             $('#rider-lookup-results .lookup-tlb tr').remove();
             $('#rider-lookup-results .error-msg').html('No riders found!');
         }
-        $('body').removeClass('waiting');
     } 
 
     $('#rider-lookup-results .lookup-frm').on('submit', function(evt) {
@@ -55,7 +55,8 @@ jQuery(document).ready(function($) {
             'firstname': $("#rider-lookup-results .lookup-frm input[name='firstname']").val(),
             'active': active
 		};
-        $('body').addClass('waiting');
+        $('#rider-lookup-results .error-msg').html('<i class="fa fa-spinner fa-pulse"></i> Please wait...');
+        $('#rider-lookup-results .lookup-tlb tr').remove();
         $.post(action, data, lookup_riders_cb);
     });
 
@@ -105,15 +106,17 @@ jQuery(document).ready(function($) {
 
 });
 </script>
+<div class="loading"><div><i class="fa fa-spinner fa-pulse"></i> Please wait...</div></div>
 <div id="rider-lookup-results" title="Lookup Riders">
 	<form class="lookup-frm stacked-form" action="<?php echo admin_url('admin-ajax.php'); ?>" method="post">
+        <input type="hidden" name="autoaccept" value="yes"/>
         <span>ID</span>
         <input type="text" name="riderid"/>
         <span>First Name</span>
         <input type="text" name="firstname"/>
         <span>Last Name</span>
         <input type="text" name="lastname"/>
-        <span>Active Members Only</span>
+        <span>Active Riders Only</span>
         <span class="checkbox-wrap">
             <input type="checkbox" name="active" checked/>
         </span>

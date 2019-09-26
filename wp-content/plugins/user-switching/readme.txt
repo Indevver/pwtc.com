@@ -3,8 +3,8 @@
 Contributors: johnbillion
 Tags: users, profiles, user switching, fast user switching, multisite, buddypress, bbpress, become, user management, developer
 Requires at least: 3.7
-Tested up to: 5.1
-Stable tag: 1.4.2
+Tested up to: 5.2
+Stable tag: 1.5.2
 Requires PHP: 5.3
 License: GPL v2 or later
 
@@ -20,7 +20,7 @@ This plugin allows you to quickly swap between user accounts in WordPress at the
  * Switch back: Instantly switch back to your originating account.
  * Switch off: Log out of your account but retain the ability to instantly switch back in again.
  * It's completely secure (see the *Security* section below).
- * Compatible with WordPress, WordPress Multisite, BuddyPress, and bbPress.
+ * Compatible with WordPress, WordPress Multisite, WooCommerce, BuddyPress, and bbPress.
 
 = Security =
 
@@ -60,7 +60,7 @@ User Switching does not send data to any third party, nor does it include any th
 
 Switching off logs you out of your account but retains your user ID in an authentication cookie so you can switch straight back without having to log in again manually. It's akin to switching to no user, and being able to switch back.
 
-The *Switch Off* link can be found in your profile menu in the WordPress toolbar. Once you've switched off you'll see a *Switch back* link in the footer of your site.
+The *Switch Off* link can be found in your profile menu in the WordPress toolbar. Once you've switched off you'll see a *Switch back* link on the Log In screen and in the footer of your site.
 
 = Does this plugin work with WordPress Multisite? =
 
@@ -73,6 +73,10 @@ Yes, and you'll also be able to switch users from member profile screens and the
 = Does this plugin work with bbPress? =
 
 Yes, and you'll also be able to switch users from member profile screens.
+
+= Does this plugin work with WooCommerce? =
+
+Yes, but for maximum compatibility you should use WooCommerce version 3.6 or later.
 
 = Does this plugin work if my site is using a two-factor authentication plugin? =
 

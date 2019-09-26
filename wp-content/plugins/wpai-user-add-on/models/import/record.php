@@ -172,6 +172,33 @@ class PMUI_Import_Record extends PMUI_Model_Record {
 			}
 		}
 		
+		// import multiple user roles
+		if (
+			// This is a new user
+	    	(empty($importData['articleData']['ID'])
+			and
+			!empty($importData['articleData']['role'])
+			)
+			or
+			// This is an existing user, and we can update the role
+			($importData['import']->options['is_update_role'] == '1'
+			and
+			!empty($importData['articleData']['role']) // no need to run as default will already be set
+			)
+    	){
+			
+			$roles_to_import = explode("|", $importData['articleData']['role']);
+			$roles_array = array();
+			
+			foreach($roles_to_import as $key => $value)
+			{
+				$roles_array[trim($value)] = true;
+			}
+			
+			update_user_meta($importData['pid'], PMXI_Plugin::getInstance()->getWPPrefix() . 'capabilities', $roles_array);
+			
+		}
+		
 		if (
 			// This is a new user
 	    	(empty($importData['articleData']['ID'])

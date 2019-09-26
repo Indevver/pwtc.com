@@ -12,6 +12,8 @@ else if ($plugin_options['admin_maint_mode'] and !current_user_can('manage_optio
 <?php       
 }
 else {
+    $lastyear = intval(date('Y', current_time('timestamp')))-1;
+    $thisyear = intval(date('Y', current_time('timestamp')));
 ?>
 <script type="text/javascript">
 jQuery(document).ready(function($) { 
@@ -19,6 +21,7 @@ jQuery(document).ready(function($) {
 	function populate_report_table(data, header) {
         $('#report-results-section .results-div').empty();
         if (data.length > 0) {
+            $('#report-results-section .results-div').append('<div>' + data.length + ' records found</div>');
             var str = '<table class="rwd-table"><tr>';
             header.forEach(function(item) {
                 str += '<th>' + item + '</th>';
@@ -81,6 +84,30 @@ jQuery(document).ready(function($) {
         }
         $('body').removeClass('waiting');
 	}   
+
+    $('#report-main-section .ride-attendence a').on('click', function(evt) {
+        evt.preventDefault();
+        if ($('#report-main-section .download-slt').val() != 'no') {
+            $('#report-main-section .download').html(
+                '<form method="post">' + 
+                '<input type="hidden" name="' + $('#report-main-section .download-slt').val() + '"/>' +
+                '<input type="hidden" name="report_id" value="' + $(this).attr('report-id') + '"/>' +
+                '<input type="hidden" name="sort" value="' + 
+                    $('#report-main-section .attendence-sort-slt').val() + '"/>' +
+                '</form>');
+            $('#report-main-section .download form').submit();
+        }
+        else {
+            var action = '<?php echo admin_url('admin-ajax.php'); ?>';
+            var data = {
+                'action': 'pwtc_mileage_generate_report',
+                'report_id': $(this).attr('report-id'),
+                'sort': $('#report-main-section .attendence-sort-slt').val()
+            };
+            $('body').addClass('waiting');
+            $.post(action, data, generate_report_cb);
+        }
+    });
 
     $('#report-main-section .ride-mileage a').on('click', function(evt) {
         evt.preventDefault();
@@ -278,10 +305,12 @@ if ($running_jobs > 0) {
                 <option value="no" selected>No</option> 
                 <option value="export_pdf">PDF file</option> 
                 <option value="export_csv">CSV file</option>
+                <option value="export_html">HTML file</option>
+                <option value="export_txt">TXT file</option>
             </select>
         </p>
         <div class='report-sec'>
-        <h3><?php echo(intval(date('Y'))-1); ?> Award Reports</h3>
+        <h3><?php echo($lastyear); ?> Award Reports</h3>
         <p>Show ID:
             <input class="award-showid-chk" type="checkbox" name="showid">
         </p>
@@ -295,10 +324,25 @@ if ($running_jobs > 0) {
         </div>
         </div>
         <div class='report-sec'>
+        <h3>Ride Attendence Reports</h3>
+        <p>Sort by: 
+            <select class='attendence-sort-slt'>
+                <option value="title">Title</option> 
+                <option value="date" selected>Date</option>
+                <option value="riders">Riders</option>
+            </select>
+        </p>
+        <div class='ride-attendence'>
+            <div><a href='#' report-id='ytd_attendence'><?php echo($thisyear); ?> Year-to-date ride attendence</a></div>
+            <div><a href='#' report-id='ly_attendence'><?php echo($lastyear); ?> ride attendence</a></div>
+        </div>
+        </div>
+        <div class='report-sec'>
         <h3>Ride Mileage Reports</h3>
         <p>Sort by: 
             <select class='mileage-sort-slt'>
                 <option value="name">Name</option> 
+                <option value="rides">Rides</option>
                 <option value="mileage" selected>Mileage</option>
             </select>
         </p>
@@ -306,8 +350,8 @@ if ($running_jobs > 0) {
             <input class="mileage-showid-chk" type="checkbox" name="showid">
         </p>
         <div class='ride-mileage'>
-            <div><a href='#' report-id='ytd_miles'>Year-to-date mileage</a></div>
-            <div><a href='#' report-id='ly_miles'><?php echo(intval(date('Y'))-1); ?> mileage</a></div>
+            <div><a href='#' report-id='ytd_miles'><?php echo($thisyear); ?> Year-to-date mileage</a></div>
+            <div><a href='#' report-id='ly_miles'><?php echo($lastyear); ?> mileage</a></div>
             <div><a href='#' report-id='lt_miles'>Lifetime mileage</a></div>
         </div>
         </div>
@@ -323,9 +367,9 @@ if ($running_jobs > 0) {
             <input class="leader-showid-chk" type="checkbox" name="showid">
         </p>
         <div class='ride-leader'>
-            <div><a href='#' report-id='ytd_led'>Year-to-date ride leaders</a></div>
-            <div><a href='#' report-id='ly_led'><?php echo(intval(date('Y'))-1); ?> ride leaders</a></div>
-            <div><a href='#' report-id='pre_ly_led'>Pre-<?php echo(intval(date('Y'))-1); ?> ride leaders</a></div>
+            <div><a href='#' report-id='ytd_led'><?php echo($thisyear); ?> Year-to-date ride leaders</a></div>
+            <div><a href='#' report-id='ly_led'><?php echo($lastyear); ?> ride leaders</a></div>
+            <div><a href='#' report-id='pre_ly_led'>Pre-<?php echo($lastyear); ?> ride leaders</a></div>
         </div>
         </div>
         <div class='report-sec'>
@@ -335,16 +379,19 @@ if ($running_jobs > 0) {
             <strong><label class="riderid"/></label>&nbsp;<label class="ridername"></label></strong>
         </p>
         <div class='specific-rider'>
-            <div><a href='#' report-id='ytd_rides'>Year-to-date rides</a></div>
-            <div><a href='#' report-id='ly_rides'><?php echo(intval(date('Y'))-1); ?> rides</a></div>
-            <div><a href='#' report-id='ytd_rides_led'>Year-to-date rides led</a></div>
-            <div><a href='#' report-id='ly_rides_led'><?php echo(intval(date('Y'))-1); ?> rides led</a></div>
+            <div><a href='#' report-id='ytd_rides'><?php echo($thisyear); ?> Year-to-date rides</a></div>
+            <div><a href='#' report-id='ly_rides'><?php echo($lastyear); ?> rides</a></div>
+            <div><a href='#' report-id='ytd_rides_led'><?php echo($thisyear); ?> Year-to-date rides led</a></div>
+            <div><a href='#' report-id='ly_rides_led'><?php echo($lastyear); ?> rides led</a></div>
         </div>
         </div>
         <div class='report-sec'>
-        <h3>Member Reports</h3>
+        <h3>Rider Reports</h3>
         <div class='members'>
-            <div><a href='#' report-id='dup_members'>Duplicate members</a></div>
+            <div><a href='#' report-id='riders_inactive'>Riders without mileage or led rides</a></div>
+            <div><a href='#' report-id='riders_w_mileage'>Riders with mileage</a></div>
+            <div><a href='#' report-id='riders_w_leaders'>Riders with led rides</a></div>
+            <div><a href='#' report-id='dup_members'>Duplicate rider names</a></div>
         </div>
         </div>
         <div class='download'></div>

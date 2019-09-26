@@ -120,9 +120,43 @@ class PwtcMileage_DB {
 			'header' => array('First Name', 'Last Name', 'IDs'),
 			'width' => array(30, 30, 40),
 			'align' => array('L', 'L', 'L'),
-			'title' => 'Members With Duplicate Names',
+			'title' => 'Riders With Duplicate Names',
 			'date_idx' => -1,
 			'id_idx' => -1
+		);
+		return $meta;		
+	}
+
+	public static function fetch_member_list($outtype, $mode) {
+    	global $wpdb;
+		$member_table = $wpdb->prefix . self::MEMBER_TABLE;
+		$leader_table = $wpdb->prefix . self::LEADER_TABLE;
+		$mileage_table = $wpdb->prefix . self::MILEAGE_TABLE;
+		if ($mode == 2) {
+			$clause = 'member_id in (select distinct member_id from ' . $mileage_table . ')';
+		}
+		else if ($mode == 1) {
+			$clause = 'member_id in (select distinct member_id from ' . $leader_table . ')';
+		}
+		else {
+			$clause = 'member_id not in (select distinct member_id from ' . $leader_table . ') and' . ' member_id not in (select distinct member_id from ' . $mileage_table . ')';
+		}
+		$results = $wpdb->get_results(
+			'select member_id, first_name, last_name, expir_date' . 
+			' from ' . $member_table . ' where ' . $clause . 
+			' order by last_name, first_name', $outtype);
+
+		return $results;
+	}
+
+	public static function meta_member_list($title) {
+		$meta = array(
+			'header' => array('ID', 'First Name', 'Last Name', 'Expiration'),
+			'width' => array(15, 30, 30, 25),
+			'align' => array('C', 'L', 'L', 'R'),
+			'title' => $title,
+			'date_idx' => 3,
+			'id_idx' => 0
 		);
 		return $meta;		
 	}
@@ -224,6 +258,61 @@ class PwtcMileage_DB {
 		return $meta;
 	}
 
+	public static function fetch_ytd_attendence($outtype, $sort, $min = 0) {
+    	global $wpdb;
+		$where = '';
+		/*
+		if ($min > 0) {
+			$where = ' where riders >= ' . $min . ' ';
+		}
+		*/
+		$results = $wpdb->get_results(
+			'select title, date, COUNT(member_id) as riders from ' . 
+			self::YTD_RIDES_VIEW . $where . ' group by ride_id order by ' . $sort , $outtype);
+		return $results;
+	}
+
+	public static function meta_ytd_attendence() {
+		$timestamp = date('M j Y', current_time('timestamp'));
+		$meta = array(
+			'header' => array('Title', 'Date', 'Riders'),
+			'width' => array(60, 25, 15),
+			'align' => array('L', 'R', 'R'),
+			'title' => 'Year-to-date Ride Attendence as of ' . $timestamp,
+			'date_idx' => 1,
+			'id_idx' => -1
+		);
+		return $meta;
+	}
+
+	public static function fetch_ly_attendence($outtype, $sort, $min = 0) {
+    	global $wpdb;
+		$where = '';
+		/*
+		if ($min > 0) {
+			$where = ' where riders >= ' . $min . ' ';
+		}
+		*/
+		$results = $wpdb->get_results(
+			'select title, date, COUNT(member_id) as riders from ' . 
+			self::LY_RIDES_VIEW . $where . ' group by ride_id order by ' . $sort , $outtype);
+		return $results;
+	}
+
+	public static function meta_ly_attendence() {
+		$thisyear = date('Y', current_time('timestamp'));
+    	$lastyear = intval($thisyear) - 1;
+		$meta = array(
+			'header' => array('Title', 'Date', 'Riders'),
+			'width' => array(60, 25, 15),
+			'align' => array('L', 'R', 'R'),
+			'title' => $lastyear . ' Ride Attendence',
+			'date_idx' => 1,
+			'id_idx' => -1
+		);
+		return $meta;
+	}
+
 	public static function fetch_ytd_miles($outtype, $sort, $min = 0, $no_id = false) {
     	global $wpdb;
 		$where = '';
@@ -232,34 +321,35 @@ class PwtcMileage_DB {
 		}
 		if ($no_id) {
 			$results = $wpdb->get_results(
-				'select concat(first_name, \' \', last_name), mileage from ' . 
+				'select concat(first_name, \' \', last_name), rides, mileage from ' . 
 				self::YTD_MILES_VIEW . $where . ' order by ' . $sort , $outtype);
 		}
 		else {
 			$results = $wpdb->get_results(
-				'select member_id, concat(first_name, \' \', last_name), mileage from ' . 
+				'select member_id, concat(first_name, \' \', last_name), rides, mileage from ' . 
 				self::YTD_MILES_VIEW . $where . ' order by ' . $sort , $outtype);
 		}
 		return $results;
 	}
 
 	public static function meta_ytd_miles($no_id = false) {
+		$timestamp = date('M j Y', current_time('timestamp'));
 		if ($no_id) {
 			$meta = array(
-				'header' => array('Name', 'Mileage'),
-				'width' => array(80, 20),
-				'align' => array('L', 'R'),
-				'title' => 'Year-to-date Rider Mileage',
+				'header' => array('Name', 'Rides', 'Mileage'),
+				'width' => array(60, 20, 20),
+				'align' => array('L', 'R', 'R'),
+				'title' => 'Year-to-date Rider Mileage as of ' . $timestamp,
 				'date_idx' => -1,
 				'id_idx' => -1
 			);	
 		}
 		else {
 			$meta = array(
-				'header' => array('ID', 'Name', 'Mileage'),
-				'width' => array(20, 60, 20),
-				'align' => array('C', 'L', 'R'),
-				'title' => 'Year-to-date Rider Mileage',
+				'header' => array('ID', 'Name', 'Rides', 'Mileage'),
+				'width' => array(20, 40, 20, 20),
+				'align' => array('C', 'L', 'R', 'R'),
+				'title' => 'Year-to-date Rider Mileage as of ' . $timestamp,
 				'date_idx' => -1,
 				'id_idx' => 0
 			);
@@ -275,12 +365,12 @@ class PwtcMileage_DB {
 		}
 		if ($no_id) {
 			$results = $wpdb->get_results(
-				'select concat(first_name, \' \', last_name), mileage from ' . 
+				'select concat(first_name, \' \', last_name), rides, mileage from ' . 
 				self::LY_MILES_VIEW . $where . ' order by ' . $sort , $outtype);
 		}
 		else {
 			$results = $wpdb->get_results(
-				'select member_id, concat(first_name, \' \', last_name), mileage from ' . 
+				'select member_id, concat(first_name, \' \', last_name), rides, mileage from ' . 
 				self::LY_MILES_VIEW . $where . ' order by ' . $sort , $outtype);
 		}
 		return $results;
@@ -291,9 +381,9 @@ class PwtcMileage_DB {
 		$lastyear = intval($thisyear) - 1;
 		if ($no_id) {
 			$meta = array(
-				'header' => array('Name', 'Mileage'),
-				'width' => array(80, 20),
-				'align' => array('L', 'R'),
+				'header' => array('Name', 'Rides', 'Mileage'),
+				'width' => array(60, 20, 20),
+				'align' => array('L', 'R', 'R'),
 				'title' => $lastyear . ' Rider Mileage',
 				'date_idx' => -1,
 				'id_idx' => -1
@@ -301,9 +391,9 @@ class PwtcMileage_DB {
 		}
 		else {
 			$meta = array(
-				'header' => array('ID', 'Name', 'Mileage'),
-				'width' => array(20, 60, 20),
-				'align' => array('C', 'L', 'R'),
+				'header' => array('ID', 'Name', 'Rides', 'Mileage'),
+				'width' => array(20, 40, 20, 20),
+				'align' => array('C', 'L', 'R', 'R'),
 				'title' => $lastyear . ' Rider Mileage',
 				'date_idx' => -1,
 				'id_idx' => 0
@@ -358,12 +448,13 @@ class PwtcMileage_DB {
 	}
 
 	public static function meta_lt_miles($no_id = false) {
+		$timestamp = date('M j Y', current_time('timestamp'));
 		if ($no_id) {
 			$meta = array(
 				'header' => array('Name', 'Mileage'),
 				'width' => array(80, 20),
 				'align' => array('L', 'R'),
-				'title' => 'Lifetime Rider Mileage',
+				'title' => 'Lifetime Rider Mileage as of ' . $timestamp,
 				'date_idx' => -1,
 				'id_idx' => -1
 			);
@@ -373,7 +464,7 @@ class PwtcMileage_DB {
 				'header' => array('ID', 'Name', 'Mileage'),
 				'width' => array(20, 60, 20),
 				'align' => array('C', 'L', 'R'),
-				'title' => 'Lifetime Rider Mileage',
+				'title' => 'Lifetime Rider Mileage as of ' . $timestamp,
 				'date_idx' => -1,
 				'id_idx' => 0
 			);
@@ -401,12 +492,13 @@ class PwtcMileage_DB {
 	}
 
 	public static function meta_ytd_led($no_id = false) {
+		$timestamp = date('M j Y', current_time('timestamp'));
 		if ($no_id) {
 			$meta = array(
 				'header' => array('Name', 'Rides Led'),
 				'width' => array(80, 20),
 				'align' => array('L', 'R'),
-				'title' => 'Year-to-date Ride Leaders',
+				'title' => 'Year-to-date Ride Leaders as of ' . $timestamp,
 				'date_idx' => -1,
 				'id_idx' => -1
 			);	
@@ -416,7 +508,7 @@ class PwtcMileage_DB {
 				'header' => array('ID', 'Name', 'Rides Led'),
 				'width' => array(20, 60, 20),
 				'align' => array('C', 'L', 'R'),
-				'title' => 'Year-to-date Ride Leaders',
+				'title' => 'Year-to-date Ride Leaders as of ' . $timestamp,
 				'date_idx' => -1,
 				'id_idx' => 0
 			);
@@ -531,11 +623,12 @@ class PwtcMileage_DB {
 	}
 
 	public static function meta_ytd_rides($name = '') {
+		$timestamp = date('M j Y', current_time('timestamp'));
 		$meta = array(
 			'header' => array('Title', 'Date', 'Mileage'),
 			'width' => array(60, 25, 15),
 			'align' => array('L', 'R', 'R'),
-			'title' => 'Year-to-date Rides Ridden by ' . $name,
+			'title' => 'Year-to-date Rides Ridden by ' . $name . ' as of ' . $timestamp,
 			'date_idx' => 1,
 			'id_idx' => -1
 		);
@@ -573,11 +666,12 @@ class PwtcMileage_DB {
 	}
 
 	public static function meta_ytd_rides_led($name = '') {
+		$timestamp = date('M j Y', current_time('timestamp'));
 		$meta = array(
 			'header' => array('Title', 'Date'),
 			'width' => array(70, 30),
 			'align' => array('L', 'R'),
-			'title' => 'Year-to-date Rides Led by ' . $name,
+			'title' => 'Year-to-date Rides Led by ' . $name . ' as of ' . $timestamp,
 			'date_idx' => 1,
 			'id_idx' => -1
 		);
@@ -644,18 +738,20 @@ class PwtcMileage_DB {
     	$results = array();
 		foreach ($rides as $ride) {
 			$postid = $ride[0];
-			$url = get_permalink(intval($postid));
-			if (!$url) {
-				$url = "";
+			if (!pwtc_mileage_posted_ride_canceled(intval($postid))) {
+				$url = get_permalink(intval($postid));
+				if (!$url) {
+					$url = "";
+				}
+				array_push($results, array($ride[0], $ride[1], $ride[2], $url));
 			}
-			array_push($results, array($ride[0], $ride[1], $ride[2], $url));
 		}
 		return $results;
 	}
 
 	public static function meta_posts_without_rides() {
 		$meta = array(
-			'header' => array('ID', 'Title', 'Date', 'URL'),
+			'header' => array('ID', 'Title', 'Date', 'Actions'),
 			'width' => array(),
 			'align' => array(),
 			'title' => 'Posted Rides without Ride Sheets',
@@ -687,7 +783,7 @@ class PwtcMileage_DB {
 
 	public static function meta_posts_without_rides2() {
 		$meta = array(
-			'header' => array('ID', 'Title', 'Date', 'Leaders', 'URL'),
+			'header' => array('ID', 'Title', 'Date', 'Leaders', 'Actions'),
 			'width' => array(),
 			'align' => array(),
 			'title' => 'Posted Rides without Ride Sheets',
@@ -711,6 +807,45 @@ class PwtcMileage_DB {
 		$results = $wpdb->get_results($wpdb->prepare('select ID, title, date, post_id' . 
 			' from ' . $ride_table . ' where post_id = %d', $postid), ARRAY_A);
 		return $results;
+	}
+
+	public static function transfer_mileage_ownership($from_memberid, $to_memberid) {
+		global $wpdb;
+		$mileage_table = $wpdb->prefix . self::MILEAGE_TABLE;
+	 	$status = $wpdb->query($wpdb->prepare('update ' . $mileage_table . 
+			 ' set member_id = %s where member_id = %s', $to_memberid, $from_memberid));
+	 	return $status;
+	}
+	
+	public static function purge_mileage($memberid) {
+    	global $wpdb;
+		$mileage_table = $wpdb->prefix . self::MILEAGE_TABLE;
+		$status = $wpdb->query($wpdb->prepare('delete from ' . $mileage_table . 
+			' where member_id = %s', $memberid));
+		return $status;
+	}
+
+	public static function transfer_leader_ownership($from_memberid, $to_memberid) {
+		global $wpdb;
+		$show_flag = $wpdb->show_errors;
+		if ($show_flag) {
+			$wpdb->hide_errors();
+		}
+		$leader_table = $wpdb->prefix . self::LEADER_TABLE;
+	 	$status = $wpdb->query($wpdb->prepare('update ' . $leader_table . 
+			 ' set member_id = %s where member_id = %s', $to_memberid, $from_memberid));
+		if ($show_flag) {
+			$wpdb->show_errors();
+		}
+	 	return $status;
+	}
+	
+	public static function purge_leaders($memberid) {
+    	global $wpdb;
+		$leader_table = $wpdb->prefix . self::LEADER_TABLE;
+		$status = $wpdb->query($wpdb->prepare('delete from ' . $leader_table . 
+			' where member_id = %s', $memberid));
+		return $status;
 	}
 
 	public static function update_ride($rideid, $title, $date, $postid=0) {
@@ -803,6 +938,17 @@ class PwtcMileage_DB {
 		$results = $wpdb->get_var($wpdb->prepare('select count(*) from ' . $leader_table . 
 			' where member_id = %s', $memberid));
 		return $results;
+	}
+
+	public static function fetch_current_time() {
+    	global $wpdb;
+		$results = $wpdb->get_results('select NOW()', ARRAY_N);
+		if (count($results) > 0) {
+			return $results[0][0];
+		}
+		else {
+			return '';
+		}
 	}
 
 	public static function delete_all_nonriders() {
@@ -938,13 +1084,20 @@ class PwtcMileage_DB {
 		return $results;
 	}
 
-	public static function insert_rider($memberid, $lastname, $firstname, $expdate) {
+	public static function insert_rider($memberid, $lastname, $firstname, $expdate, $no_update = false) {
     	global $wpdb;
 		$member_table = $wpdb->prefix . self::MEMBER_TABLE;
-		$status = $wpdb->query($wpdb->prepare('insert into ' . $member_table .
-			' (member_id, last_name, first_name, expir_date) values (%s, %s, %s, %s)' . 
-			' on duplicate key update last_name = %s, first_name = %s, expir_date = %s',
-			$memberid, $lastname, $firstname, $expdate, $lastname, $firstname, $expdate));
+		if ($no_update) {
+			$status = $wpdb->query($wpdb->prepare('insert into ' . $member_table .
+				' (member_id, last_name, first_name, expir_date) values (%s, %s, %s, %s)',
+				$memberid, $lastname, $firstname, $expdate));
+		}
+		else {
+			$status = $wpdb->query($wpdb->prepare('insert into ' . $member_table .
+				' (member_id, last_name, first_name, expir_date) values (%s, %s, %s, %s)' . 
+				' on duplicate key update last_name = %s, first_name = %s, expir_date = %s',
+				$memberid, $lastname, $firstname, $expdate, $lastname, $firstname, $expdate));
+		}
 		return $status;
 	}
 
@@ -1412,8 +1565,8 @@ class PwtcMileage_DB {
 		}
 
 		$result = $wpdb->query('create or replace view ' . self::YTD_MILES_VIEW . 
-			' (member_id, first_name, last_name, mileage)' . 
-			' as select c.member_id, c.first_name, c.last_name, SUM(m.mileage)' . 
+			' (member_id, first_name, last_name, mileage, rides)' . 
+			' as select c.member_id, c.first_name, c.last_name, SUM(m.mileage), COUNT(m.mileage)' . 
 			' from ((' . $mileage_table . ' as m inner join ' . $member_table . ' as c on c.member_id = m.member_id)' . 
 			' inner join ' . $ride_table . ' as r on m.ride_id = r.ID)' . 
 			' where r.date >= DATE_FORMAT(CURDATE(), \'%Y-01-01\')' . 
@@ -1424,8 +1577,8 @@ class PwtcMileage_DB {
 		}
 
 		$result = $wpdb->query('create or replace view ' . self::LY_MILES_VIEW . 
-			' (member_id, first_name, last_name, mileage)' . 
-			' as select c.member_id, c.first_name, c.last_name, SUM(m.mileage)' . 
+			' (member_id, first_name, last_name, mileage, rides)' . 
+			' as select c.member_id, c.first_name, c.last_name, SUM(m.mileage), COUNT(m.mileage)' . 
 			' from ((' . $mileage_table . ' as m inner join ' . $member_table . ' as c on c.member_id = m.member_id)' . 
 			' inner join ' . $ride_table . ' as r on m.ride_id = r.ID)' . 
 			' where r.date between DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 YEAR), \'%Y-01-01\')' . 
@@ -1532,8 +1685,8 @@ class PwtcMileage_DB {
 		}
 
 		$result = $wpdb->query('create or replace view ' . self::YTD_RIDES_VIEW . 
-			' (title, date, mileage, member_id)' . 
-			' as select r.title, r.date, m.mileage, m.member_id' . 
+			' (title, date, mileage, member_id, ride_id)' . 
+			' as select r.title, r.date, m.mileage, m.member_id, r.ID' . 
 			' from ' . $ride_table . ' as r inner join ' . $mileage_table . ' as m on r.ID = m.ride_id' . 
 			' where r.date >= DATE_FORMAT(CURDATE(), \'%Y-01-01\')' . 
 			' order by r.date'); 
@@ -1543,8 +1696,8 @@ class PwtcMileage_DB {
 		}
 
 		$result = $wpdb->query('create or replace view ' . self::LY_RIDES_VIEW . 
-			' (title, date, mileage, member_id)' . 
-			' as select r.title, r.date, m.mileage, m.member_id' . 
+			' (title, date, mileage, member_id, ride_id)' . 
+			' as select r.title, r.date, m.mileage, m.member_id, r.ID' . 
 			' from ' . $ride_table . ' as r inner join ' . $mileage_table . ' as m on r.ID = m.ride_id' . 
 			' where r.date between DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 YEAR), \'%Y-01-01\')' . 
 			' and DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 YEAR), \'%Y-12-31\')' . 
@@ -1580,6 +1733,43 @@ class PwtcMileage_DB {
 		if (false === $result) {
 			pwtc_mileage_write_log( 'Could not drop views: ' . $wpdb->last_error);
 		}
+	}
+
+	public static function get_db_version() {
+		return get_option('pwtc_mileage_db_version');
+	}
+
+	public static function set_db_version() {
+		$installed_ver = get_option('pwtc_mileage_db_version');
+		if ($installed_ver == false) {
+			add_option('pwtc_mileage_db_version', PWTC_MILEAGE__DB_VERSION);
+		}
+		else {
+			update_option('pwtc_mileage_db_version', PWTC_MILEAGE__DB_VERSION);
+		}
+	}
+
+	public static function delete_db_version() {
+		delete_option('pwtc_mileage_db_version');
+	}
+
+	public static function handle_db_upgrade() {
+		global $wpdb;
+		$err_cnt = 0;
+		$installed_ver = self::get_db_version();
+		if ($installed_ver == false) {
+			pwtc_mileage_write_log( 'Upgrading PWTC Mileage DB version from 1.1 to 1.2');
+			$result = $wpdb->query('drop view if exists ' . self::LY_RIDES_VIEW . ', ' .
+				self::YTD_RIDES_VIEW . ', ' . self::LY_MILES_VIEW . ', ' . 
+				self::YTD_MILES_VIEW);
+			if (false === $result) {
+				pwtc_mileage_write_log( 'Could not drop views ' . self::LY_RIDES_VIEW . ', ' .
+				self::YTD_RIDES_VIEW . ', ' . self::LY_MILES_VIEW . ', ' . 
+				self::YTD_MILES_VIEW . ': ' . $wpdb->last_error);
+				$err_cnt++;
+			}
+		}
+		return $err_cnt;
 	}
    
 }

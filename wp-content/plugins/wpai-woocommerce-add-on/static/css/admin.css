@@ -108,7 +108,7 @@
 .wpallimport-plugin #woocommerce_attributes{
 	float: right !important;
 	padding-top: 10px;
-	width:75% !important;
+	width: 75% !important;
 }
 .wpallimport-plugin .variations_tree{
 	font-family: sans-serif;
@@ -495,4 +495,18 @@ div#order_taxes.panel.woocommerce_options_panel {
 .wpallimport-plugin .wpallimport-billing-user-try-match-selector select{
 	width: 130px;
 	font-size: 14px !important;
+}
+#attributes_table .drag-attribute,
+#variation_attributes_table .drag-attribute{
+	overflow: hidden;
+	background: url("../img/drag.png") top right no-repeat;
+	cursor: pointer;
+	padding-left: 25px;
+	background-position: 0 10px;
+}
+#attributes_table .ui-sortable-placeholder,
+#variation_attributes_table .ui-sortable-placeholder {
+	border: 1px dashed #ccc;
+	visibility: visible !important;
+	height: 100px;
 }

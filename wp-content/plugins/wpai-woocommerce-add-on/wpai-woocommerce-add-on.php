@@ -3,51 +3,46 @@
 Plugin Name: WP All Import - WooCommerce Add-On Pro
 Plugin URI: http://www.wpallimport.com/
 Description: Import to WooCommerce. Adds a section to WP All Import that looks just like WooCommerce. Requires WP All Import.
-Version: 2.3.9
+Version: 3.0.7
 Author: Soflyy
-WC tested up to: 3.3.1
+WC tested up to: 3.6.0
 */
-/**
- * Plugin root dir with forward slashes as directory separator regardless of actuall DIRECTORY_SEPARATOR value
- * @var string
- */
-define('PMWI_ROOT_DIR', str_replace('\\', '/', dirname(__FILE__)));
-/**
- * Plugin root url for referencing static content
- * @var string
- */
-define('PMWI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
-/**
- * Plugin prefix for making names unique (be aware that this variable is used in conjuction with naming convention,
- * i.e. in order to change it one must not only modify this constant but also rename all constants, classes and functions which
- * names composed using this prefix)
- * @var string
- */
-define('PMWI_PREFIX', 'pmwi_');
 
-define('PMWI_VERSION', '2.3.9');
+if ( ! function_exists( 'is_plugin_active' ) ) {
+    require_once ABSPATH . 'wp-admin/includes/plugin.php';
+}
 
-if ( class_exists('PMWI_Plugin') and PMWI_EDITION == "free"){
-
-	function pmwi_notice(){
-		
-		?>
-		<div class="error"><p>
-			<?php printf(__('Please de-activate and remove the free version of the WooCommere add-on before activating the paid version.', 'wpai_woocommerce_addon_plugin'));
-			?>
-		</p></div>
-		<?php				
-
-		deactivate_plugins(PMWI_ROOT_DIR . '/plugin.php');
-
-	}
-
-	add_action('admin_notices', 'pmwi_notice');	
-
+if ( is_plugin_active('woocommerce-xml-csv-product-import/plugin.php') ) {
+    // Set a temporary flag to show admin notification.
+    update_option('pmwi_free_deactivation_notice', true);
+    // Deactivate Free version of WooCommerce Add-On.
+    deactivate_plugins('woocommerce-xml-csv-product-import/plugin.php');
 }
 else {
 
+    define('PMWI_VERSION', '3.0.7');
+
 	define('PMWI_EDITION', 'paid');
+
+    /**
+     * Plugin root dir with forward slashes as directory separator regardless of actuall DIRECTORY_SEPARATOR value
+     * @var string
+     */
+    define('PMWI_ROOT_DIR', str_replace('\\', '/', dirname(__FILE__)));
+
+    /**
+     * Plugin root url for referencing static content
+     * @var string
+     */
+    define('PMWI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
+
+    /**
+     * Plugin prefix for making names unique (be aware that this variable is used in conjuction with naming convention,
+     * i.e. in order to change it one must not only modify this constant but also rename all constants, classes and functions which
+     * names composed using this prefix)
+     * @var string
+     */
+    define('PMWI_PREFIX', 'pmwi_');
 
 	/**
 	 * Main plugin file, Introduces MVC pattern
@@ -55,19 +50,12 @@ else {
 	 * @singletone
 	 * @author Maksym Tsypliakov <maksym.tsypliakov@gmail.com>
 	 */
-
 	final class PMWI_Plugin {
 		/**
 		 * Singletone instance
 		 * @var PMWI_Plugin
 		 */
 		protected static $instance;
-
-		/**
-		 * Plugin options
-		 * @var array
-		 */
-		protected $options = array();
 
 		/**
 		 * Plugin root dir
@@ -88,7 +76,12 @@ else {
 		 * Plugin file path
 		 * @var string
 		 */
-		const FILE = __FILE__;	
+		const FILE = __FILE__;
+        /**
+         * Plugin text domain
+         * @var string
+         */
+		const TEXT_DOMAIN = 'wpai_woocommerce_addon_plugin';
 
 		/**
 		 * Return singletone instance
@@ -101,7 +94,10 @@ else {
 			return self::$instance;
 		}
 
-		static public function getEddName(){
+        /**
+         * @return string
+         */
+        static public function getEddName(){
 			return 'WooCommerce Add-On';
 		}
 
@@ -188,14 +184,9 @@ else {
 				require_once $filePath;
 			}
 
-			// init plugin options
-			$option_name = get_class($this) . '_Options';
-			$options_default = PMWI_Config::createFromFile(self::ROOT_DIR . '/config/options.php')->toArray();
-			$this->options = array_intersect_key(get_option($option_name, array()), $options_default) + $options_default;
-			$this->options = array_intersect_key($options_default, array_flip(array('info_api_url'))) + $this->options; // make sure hidden options apply upon plugin reactivation		
-
-			update_option($option_name, $this->options);
-			$this->options = get_option(get_class($this) . '_Options');
+            if (is_dir(self::ROOT_DIR . '/libraries')) foreach (PMWI_Helper::safe_glob(self::ROOT_DIR . '/libraries/*.php', PMWI_Helper::GLOB_RECURSE | PMWI_Helper::GLOB_PATH | PMWI_Helper::GLOB_NOSORT) as $filePath) {
+                require_once $filePath;
+            }
 
 			register_activation_hook(self::FILE, array($this, 'activation'));
 
@@ -238,7 +229,11 @@ else {
 
 		}
 
-		public function migrate_options(){
+        /**
+         * @return bool
+         * @throws \Exception
+         */
+        public function migrate_options(){
 
 			$installed_ver = get_option( "wp_all_import_woocommerce_addon_db_version" );
 
@@ -272,7 +267,11 @@ else {
 			update_option( "wp_all_import_woocommerce_addon_db_version", PMWI_VERSION );
 		}
 
-		private function migrate(&$options, $version){
+        /**
+         * @param $options
+         * @param $version
+         */
+        private function migrate(&$options, $version){
 
 			// Update _featured, _visibility and _stock_status options according to WooCommerce 3.0
 			if ( version_compare($version, '2.3.7-beta-2.1') < 0  ){
@@ -330,8 +329,10 @@ else {
 			}
 		}
 
-		public function init()
-		{
+        /**
+         *  Load plugin text domain.
+         */
+        public function init() {
 			$this->load_plugin_textdomain();
 		}
 
@@ -345,9 +346,9 @@ else {
 		 */
 		public function load_plugin_textdomain() {
 			
-			$locale = apply_filters( 'plugin_locale', get_locale(), 'wpai_woocommerce_addon_plugin' );							
+			$locale = apply_filters( 'plugin_locale', get_locale(), self::TEXT_DOMAIN );
 			
-			load_plugin_textdomain( 'wpai_woocommerce_addon_plugin', false, dirname( plugin_basename( __FILE__ ) ) . "/i18n/languages" );
+			load_plugin_textdomain( self::TEXT_DOMAIN, false, dirname( plugin_basename( __FILE__ ) ) . "/i18n/languages" );
 		}	
 
 		/**
@@ -358,7 +359,7 @@ else {
 			$page = strtolower($input->getpost('page', ''));
 			if (preg_match('%^' . preg_quote(str_replace('_', '-', self::PREFIX), '%') . '([\w-]+)$%', $page)) {
 				$this->adminDispatcher($page, strtolower($input->getpost('action', 'index')));
-			}			
+			}
 		}
 
 		/**
@@ -380,7 +381,11 @@ else {
 			return ob_get_clean();
 		}
 
-		public function replace_callback($matches){
+        /**
+         * @param $matches
+         *
+         * @return string
+         */public function replace_callback($matches){
 			return strtoupper($matches[0]);
 		}
 
@@ -426,7 +431,6 @@ else {
 							'is_user' => is_user_admin(),
 						);
 						add_filter('current_screen', array($this, 'getAdminCurrentScreen'));
-						add_filter('admin_body_class', create_function('', 'return "' . PMWI_Plugin::PREFIX . 'plugin";'));
 
 						$controller = new $controllerName();
 						if ( ! $controller instanceof PMWI_Controller_Admin) {
@@ -453,8 +457,15 @@ else {
 			}
 		}
 
-		protected $_admin_current_screen = NULL;
-		public function getAdminCurrentScreen()
+        /**
+         * @var null
+         */
+        protected $_admin_current_screen = NULL;
+
+        /**
+         * @return null
+         */
+        public function getAdminCurrentScreen()
 		{
 			return $this->_admin_current_screen;
 		}
@@ -477,13 +488,13 @@ else {
 			}
 			foreach ($is_prefix ? array('models', 'controllers', 'shortcodes', 'classes') : array('libraries') as $subdir) {
 				$path = self::ROOT_DIR . '/' . $subdir . '/' . $filePath;
-				if (is_file($path)) {
+				if (strlen($filePath) < 40 && is_file($path)) {
 					require $path;
 					return TRUE;
 				}
 				if ( ! $is_prefix) {
 					$pathAlt = self::ROOT_DIR . '/' . $subdir . '/' . $filePathAlt;
-					if (is_file($pathAlt)) {
+					if (strlen($filePathAlt) < 40 && is_file($pathAlt)) {
 						require $pathAlt;
 						return TRUE;
 					}
@@ -494,49 +505,11 @@ else {
 		}
 
 		/**
-		 * Get plugin option
-		 * @param string[optional] $option Parameter to return, all array of options is returned if not set
-		 * @return mixed
-		 */
-		public function getOption($option = NULL) {
-			if (is_null($option)) {
-				return $this->options;
-			} else if (isset($this->options[$option])) {
-				return $this->options[$option];
-			} else {
-				throw new Exception("Specified option is not defined for the plugin");
-			}
-		}
-		/**
-		 * Update plugin option value
-		 * @param string $option Parameter name or array of name => value pairs
-		 * @param mixed[optional] $value New value for the option, if not set than 1st parameter is supposed to be array of name => value pairs
-		 * @return array
-		 */
-		public function updateOption($option, $value = NULL) {
-			is_null($value) or $option = array($option => $value);
-			if (array_diff_key($option, $this->options)) {
-				throw new Exception("Specified option is not defined for the plugin");
-			}
-			$this->options = $option + $this->options;
-			update_option(get_class($this) . '_Options', $this->options);
-
-			return $this->options;
-		}
-
-		/**
 		 * Plugin activation logic
 		 */
 		public function activation() {
-
-			// uncaught exception doesn't prevent plugin from being activated, therefore replace it with fatal error so it does
-			set_exception_handler(create_function('$e', 'trigger_error($e->getMessage(), E_USER_ERROR);'));
-
-			// create plugin options
-			$option_name = get_class($this) . '_Options';
-			$options_default = PMWI_Config::createFromFile(self::ROOT_DIR . '/config/options.php')->toArray();
-			update_option($option_name, $options_default);		
-
+			// Uncaught exception doesn't prevent plugin from being activated, therefore replace it with fatal error so it does.
+            set_exception_handler(function($e){trigger_error($e->getMessage(), E_USER_ERROR);});
 		}		
 
 		/**
@@ -740,6 +713,7 @@ else {
 				'put_variation_image_to_gallery' => 0,
 				'import_additional_variation_images' => 0,
 				'single_variation_stock_status' => '',
+				'single_product_low_stock_amount' => '',
 				'pmwi_order' => array(										
 					'status' => 'wc-pending',
 					'status_xpath' => '',
@@ -845,7 +819,11 @@ else {
 				'do_not_send_order_notifications' => 1,
 				'is_update_advanced_options' => 1,
 				'is_update_catalog_visibility' => 1,
-				'is_update_featured_status' => 1
+				'is_update_featured_status' => 1,
+                'existing_parent_product_matching_logic' => 'custom field',
+                'existing_parent_product_title' => '',
+                'existing_parent_product_cf_name' => '_sku',
+                'existing_parent_product_cf_value' => ''
 			);
 		}	
 	}

@@ -18,7 +18,7 @@
 								<input name="pmui[last_name]" type="text" class="widefat" style="width:100%;margin-bottom:5px;" value="<?php echo esc_attr($post['pmui']['last_name']) ?>"/>				
 							</div>
 							<div class="input">
-								<p style="margin-bottom:5px;"><?php _e('<b>Role</b>', 'wp_all_import_user_add_on');?><a class="wpallimport-help" href="#help" original-title="<?php _e('A string with role slug used to set the user\'s role. Default role is subscriber.', 'wp_all_import_user_add_on'); ?>">?</a></p>
+								<p style="margin-bottom:5px;"><?php _e('<b>Role</b>', 'wp_all_import_user_add_on');?><a class="wpallimport-help" href="#help" original-title="<?php _e('A string with role slug used to set the user\'s role. Default role is subscriber. Multiple roles must be separated by pipes: e.g. subscriber|editor|contributor ', 'wp_all_import_user_add_on'); ?>">?</a></p>
 								<input name="pmui[role]" type="text" class="widefat" style="width:100%;margin-bottom:5px;" value="<?php echo esc_attr($post['pmui']['role']) ?>"/>				
 							</div>
 							<div class="input">

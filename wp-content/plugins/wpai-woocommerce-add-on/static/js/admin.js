@@ -25,8 +25,7 @@
 
 		if (!is_multiple_product_type) $('.product_data_tabs li, .options_group').show();
 
-		if ( ! is_variable && ! is_grouped && ! is_external && is_multiple_product_type )
-		{
+		if ( ! is_variable && ! is_grouped && ! is_external && is_multiple_product_type ) {
 			is_simple = true;
 		}		
 
@@ -92,7 +91,7 @@
 
 		var matching_parent = $('input[name=matching_parent]:checked').val();
 
-		if (matching_parent == "xml" || matching_parent == "first_is_parent_title" || matching_parent == "auto"){ 
+		if (matching_parent == "xml" || matching_parent == "first_is_parent_title" || matching_parent == "auto" || matching_parent == "existing"){
 			$('#variations_tag').show();
 			$('.variations_are_not_child_elements').hide();
 		} 
@@ -101,18 +100,16 @@
 			$('.variations_are_not_child_elements').show();
 		}
 
-		var $variations_matching = $('input[name=matching_parent]').val();
-
-		if ($('input[name=is_variation_product_manage_stock]:checked').val() == 'no' || $variations_matching == "xml" || $variations_matching == "first_is_parent_title" || $variations_matching == "auto"){
+		if ($('input[name=is_variation_product_manage_stock]:checked').val() == 'no' || matching_parent == "xml" || matching_parent == "first_is_parent_title" || matching_parent == "auto" || matching_parent == "existing"){
 			$('.variation_stock_fields').hide();
 		} else {
 			$('.variation_stock_fields').fadeIn();
 		}
-	}
+	};
 
 	$('input[name=matching_parent]').click(function(){
 
-		if ($(this).val() == "xml" || $(this).val() == "first_is_parent_title" || $(this).val() == "auto"){ 
+		if ($(this).val() == "xml" || $(this).val() == "first_is_parent_title" || $(this).val() == "auto" || $(this).val() == "existing"){
 			$('#variations_tag').show();
 			$('.variations_are_not_child_elements').hide();
 		} 
@@ -226,8 +223,9 @@
 			if (13 == e.keyCode) {$variation_tagno = 0;  $(this).change();}
 		});
 
-		if ($input.val() != "")			
-			variationsXPathChanged();				
+		if ($input.val() != "") {
+            variationsXPathChanged();
+		}
 
 		$('#variations_xpath').mousemove(function(){
 			variationsXPathChanged();				
@@ -236,24 +234,17 @@
     
 
 	$('.variation_attributes').find('label').live({
-        mouseenter:
-           function()
-            {           	
-	           	if ( "" == $(this).attr('for') )
-	           	{
-					var counter = $(this).parents('table:first').find('tr.form-field:visible').length;
-					
-					$(this).parents('span:first').find('input').attr('id', $(this).parents('span:first').find('input').attr('name').replace('[]','') + '_' + counter );
-					$(this).attr('for', $(this).parents('span:first').find('input').attr('id'));
-					var $create_terms = $(this).parents('.wpallimport-radio-field:first').find('.is_create_taxonomy');
-					if ( ! $create_terms.hasClass('switcher-target-is_taxonomy_' + counter)) $create_terms.addClass('switcher-target-is_taxonomy_' + counter);
-				}
-            },
-        mouseleave:
-           function()
-           {
+        mouseenter: function () {
+            if ("" == $(this).attr('for')) {
+                var counter = $(this).parents('table:first').find('tr.form-field:visible').length;
 
-           }
+                $(this).parents('span:first').find('input').attr('id', $(this).parents('span:first').find('input').attr('name').replace('[]', '') + '_' + counter);
+                $(this).attr('for', $(this).parents('span:first').find('input').attr('id'));
+                var $create_terms = $(this).parents('.wpallimport-radio-field:first').find('.is_create_taxonomy');
+                if (!$create_terms.hasClass('switcher-target-is_taxonomy_' + counter)) $create_terms.addClass('switcher-target-is_taxonomy_' + counter);
+            }
+        },
+        mouseleave: function () {}
     });
 
     $('.add-new-custom').click(function(){
@@ -261,11 +252,9 @@
     	var counter = $(this).parents('table:first').find('tr.form-field:visible').length - 1;
 
     	$('#woocommerce_attributes').find('.default_attribute_settings').find('label').each(function(){
-    		if ( "" == $(this).attr('for') )
-           	{
+    		if ( "" == $(this).attr('for') ) {
            		var $parent = $(this).parents('tr.form-field:first');
-           		if ( ! $parent.hasClass('template'))
-           		{           							
+           		if ( ! $parent.hasClass('template')) {
 					$(this).parents('span:first').find('input').attr('id', $(this).parents('span:first').find('input').attr('name').replace('[]','') + '_' + counter );
 					$(this).attr('for', $(this).parents('span:first').find('input').attr('id'));
 					var $create_terms = $(this).parents('.wpallimport-radio-field:first').find('.is_create_taxonomy');
@@ -276,8 +265,7 @@
 
     	$('#woocommerce_attributes').find('.advanced_settings_template').each(function(){
     		var $tpl = $(this).parents('tr.form-field:first');
-       		if ( ! $tpl.hasClass('template'))
-       		{  
+       		if ( ! $tpl.hasClass('template')) {
 	    		$(this).find('label').each(function(){    		   			    			
 		   			$(this).attr('for', $(this).attr('for').replace('00', counter));							
 		    	});
@@ -318,8 +306,9 @@
 			$(this).parents('#product:first').find('input[name=unique_key]').val($unique_key + attrs.join('-'));
 			alert('The unique key has been successfully generated');
 		}
-		else
-			alert('At first, you should add minimum one attribute on the "Attributes" tab.');
+		else {
+            alert('At first, you should add minimum one attribute on the "Attributes" tab.');
+		}
 	});
 
 	$('.pmwi_adjust_type').change(function(){
@@ -350,25 +339,25 @@
 	});
 
 	$('.pmwi_trigger_adjust_prices').click(function(){
-		if ($(this).find('span').html() == '-')
-			$(this).find('span').html('+');
-		else
-			$(this).find('span').html('-');
+		if ($(this).find('span').html() == '-') {
+            $(this).find('span').html('+');
+		}
+		else {
+            $(this).find('span').html('-');
+		}
 		$('.pmwi_adjust_prices').slideToggle();
 	});
 
 	$('.advanced_attributes').live('click', function(){
 		var $parent = $(this).parent('div.wpallimport-radio-field:first');
 
-		if ($(this).find('span').html() == "+")
-		{
+		if ($(this).find('span').html() == "+") {
 			$parent.find('.default_attribute_settings').hide();
 			$parent.find('.advanced_attribute_settings').fadeIn();
 			$parent.find('input[name^=is_advanced]').val('1');
 			$(this).find('span').html("-");			
 		}
-		else
-		{
+		else {
 			$parent.find('.advanced_attribute_settings').hide();
 			$parent.find('.default_attribute_settings').fadeIn();
 			$parent.find('input[name^=is_advanced]').val('0');
@@ -377,8 +366,7 @@
 	});
 
 	$('input[name^=is_advanced]').each(function(){
-		if ($(this).val() == '1')
-		{
+		if ($(this).val() == '1') {
 			var $parent = $(this).parent('div.wpallimport-radio-field:first');
 			$parent.find('.advanced_attributes').click();
 		}
@@ -444,8 +432,7 @@
 
 	$('a.add-new-line').each(function(){
 		var $parent = $(this).parents('table:first');		
-		if ($(this).parents('table').length < 4 && $parent.children('tbody').children('tr').length == 2)
-		{						
+		if ($(this).parents('table').length < 4 && $parent.children('tbody').children('tr').length == 2) {
 			$(this).click();	
 		} 
 	});
@@ -461,7 +448,6 @@
 				if ($targets.find('a.add-new-line').length){
 					var $parent = $targets.find('a.add-new-line').parents('table:first');
 					if ($parent.children('tbody').children('tr').length == 2){
-						// $(this).find('a.add-new-line').click();
 						var $add_new = $targets.find('a.add-new-line');
 						var $taxes = $add_new.parents('table').first();
 						var $template = $taxes.children('tbody').children('tr.template');
@@ -480,25 +466,19 @@
 			$(this).find('span').html('+');
 			$targets.slideUp().find('.clear-on-switch').add($targets.filter('.clear-on-switch')).val('');
 		}
-
 	}).click();	
 
 	$('.variable_repeater_mode').live('change', function(){
 		// if variable mode
-		if ($(this).is(':checked'))
-		{
+		if ($(this).is(':checked')) {
 			var $parent = $(this).parents('.options_group:first');
-			
-			if ($(this).val() == 'xml' || $(this).val() == 'csv')
-			{
+			if ($(this).val() == 'xml' || $(this).val() == 'csv') {
 				$parent.find('table.wpallimport_variable_table').find('tr.wpallimport-row-actions').hide();			
 			}						
-			else
-			{
+			else {
 				$parent.find('table.wpallimport_variable_table').find('tr.wpallimport-row-actions').show();
 			}
 		}
-
 	}).change();
 
 	$('#billing_source_match_by').on('change', function(){
@@ -514,5 +494,11 @@
 			$('.is_guest_matching_notice').slideDown();
 		}
 	}).change();
+
+	// Sortable product attributes.
+	$('#attributes_table tbody, #variation_attributes_table tbody').sortable({
+		items: "tr:not(.wpallimport-table-actions, .template)",
+		handle: ".drag-attribute",
+	}).disableSelection();
 
 });})(jQuery);
