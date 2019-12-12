@@ -45,7 +45,7 @@ function echo_ical_rideevent() {
 
     echo_ical_longline('SUMMARY', html_entity_decode(get_the_title()));
 
-    $desc = 'Portland Wheelmen Touring Club\n';
+    $desc = 'Portland Bicycling Club\n';
     $desc .= date('l, F j \a\t g:i A', strtotime(get_field('date'))) . '\n\n';
     $desc .= 'Please join us for a bike ride, all are welcome!\n';
     $desc .= 'For details see:\n';

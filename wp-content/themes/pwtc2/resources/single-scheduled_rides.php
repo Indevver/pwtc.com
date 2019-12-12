@@ -60,7 +60,8 @@ else {
 // 1) http://foo.bar.com becomes <a href="http://foo.bar.com">http://foo.bar.com</a>
 // 2) http://foo.bar.com|foobar becomes <a href="http://foo.bar.com">foobar</a>
 // 3) http://foo.bar.com|foobar|. becomes <a href="http://foo.bar.com">foobar</a>.
-$desc = esc_html(get_field('description', false, false));
+$message = get_field('description');
+$desc = wp_kses($message, array('br' => array(), 'em' => array(), 'strong' => array()));
 $desc2 = "";
 $tok = strtok($desc, " \n\t\r");
 while ($tok !== false) {

@@ -1633,7 +1633,7 @@ if( function_exists('acf_add_local_field_group') ):
                 'placeholder' => '',
                 'maxlength' => '',
                 'rows' => 22,
-                'new_lines' => 'wpautop',
+                'new_lines' => 'br',
             ),
         ),
         'location' => array (
@@ -2119,7 +2119,7 @@ if( function_exists('acf_add_local_field_group') ):
                 'placeholder' => '',
                 'maxlength' => '',
                 'rows' => '',
-                'new_lines' => 'wpautop',
+                'new_lines' => 'br',
             ),
         ),
         'location' => array (
