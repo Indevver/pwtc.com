@@ -7,6 +7,12 @@
                 <h1 class="{% if post.get_field('is_canceled') %}canceled{% endif %}">{{ post.title() }}</h1>
                 {% if post.get_field('is_canceled') %}
                     <h3>This ride has been canceled!</h3>
+                {% elseif ride_signup_msg %}
+                    <div class="callout warning">{{ ride_signup_msg }} 
+                    {% if ride_signup_url %}
+                        <br><a href="{{ ride_signup_url }}" class="dark button"><i class="fa fa-user-plus"></i> Signup</a>
+                    {% endif %}
+                    </div>
                 {% endif %}
                 <div class="row column description">
                     {% include 'partials/ride-description.html.twig' with {description: description} only %}
@@ -52,6 +58,12 @@
                     {% include 'partials/ride-calendarlink.html.twig' with {date: post.get_field('date')} only %}
                     <a href="{{ current_url }}?feed=ical-ride" class="dark button"><i class="fa fa-download"></i> Add to Calendar</a>
                     {% if user_can_cancel %}
+                        {% if view_signup_url %}
+                            <a href="{{ view_signup_url }}" class="dark button"><i class="fa fa-users"></i> View Signups</a>
+                        {% endif %}
+                        {% if edit_ride_url %}
+                            <a href="{{ edit_ride_url }}" class="dark button"><i class="fa fa-pencil-square-o"></i> Edit Ride</a>
+                        {% endif %}
                         {% if post.get_field('is_canceled') %}
                             <a href="{{ current_url }}?canceled=0" class="success button"><i class="far fa-calendar-check"></i> Allow Ride</a>
                         {% else %}
