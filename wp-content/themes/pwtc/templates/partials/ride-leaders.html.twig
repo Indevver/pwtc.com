@@ -1,7 +1,7 @@
 {% for leader in leaders %}
     <div class="leader">
         {{ SP.WordPress.getAvatar(256, leader.ID) }}
-        <h5 class="name">{{ SP.WordPress.getUserMeta(leader.ID, 'first_name', true) }} {{ SP.WordPress.getUserMeta(leader.ID, 'last_name', true) }}</h5>
+        <h5 class="name">{{ SP.WordPress.getUserMeta(leader.ID, 'first_name', true) }}&nbsp;{{ SP.WordPress.getUserMeta(leader.ID, 'last_name', true) }}</h5>
         <ul class="contact vertical menu">
             {% if SP.ACF.get_field('use_contact_email', 'user_'~leader.ID) %}
                 {% if SP.ACF.get_field('contact_email', 'user_'~leader.ID) %}
